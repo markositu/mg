@@ -16,7 +16,15 @@
 //    IINTERSECT intersect
 
 int BSpherePlaneIntersect(const BSphere *bs, Plane *pl) {
-
+	int res;
+	float distance=pl->signedDistance(bs->getPosition());
+	float radio= bs->getRadius();
+	if(abs(distance)< radio)res=IINTERSECT;
+	else{
+		if(distance>0)res=+IREJECT;
+		else{res=-IREJECT;}
+	}
+	return res;
 }
 
 
@@ -26,7 +34,11 @@ int BSpherePlaneIntersect(const BSphere *bs, Plane *pl) {
 //    IREJECT don't intersect
 
 int  BBoxBBoxIntersect(const BBox *bba, const BBox *bbb ) {
-
+	int res=IINTERSECT;
+	if(bba->m_min[0]>bbb->m_max[0]||bbb->m_min[0]>bba->m_max[0])res=IREJECT;
+	if(bba->m_min[1]>bbb->m_max[1]||bbb->m_min[1]>bba->m_max[1])res=IREJECT;
+	if(bba->m_min[2]>bbb->m_max[2]||bbb->m_min[2]>bba->m_max[2])res=IREJECT;
+	return res;
 }
 
 // @@ TODO: test if a BBox and a plane intersect.
@@ -36,7 +48,27 @@ int  BBoxBBoxIntersect(const BBox *bba, const BBox *bbb ) {
 //    IINTERSECT intersect
 
 int  BBoxPlaneIntersect (const BBox *theBBox, Plane *thePlane) {
-
+	Vector3 min=theBBox->m_min;
+	Vector3 max=theBBox->m_max;
+	int res;
+	res=thePlane->whichSide(min);
+	if(
+		thePlane->whichSide(max)==res &&
+		thePlane->whichSide(Vector3(max.x(),max.y(),min.z()))==res &&
+		thePlane->whichSide(Vector3(max.x(),min.y(),max.z()))==res &&
+		thePlane->whichSide(Vector3(max.x(),min.y(),min.z()))==res &&
+		thePlane->whichSide(Vector3(min.x(),max.y(),max.z()))==res &&
+		thePlane->whichSide(Vector3(min.x(),max.y(),min.z()))==res &&
+		thePlane->whichSide(Vector3(min.x(),min.y(),max.z()))==res &&
+		thePlane->whichSide(Vector3(min.x(),min.y(),min.z()))==res 
+		)
+	{	
+		return res;
+	}
+	
+	
+	return IINTERSECT;
+	
 }
 
 // Test if two BSpheres intersect.
