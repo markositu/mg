@@ -282,7 +282,7 @@ void Node::addChild(Node *theChild) {
 	} else {
 		// node does not have gObject, so attach child
 		theChild->m_parent=this;
-		this->m_children.push_back(theChild);
+		m_children.push_back(theChild);
 	}
 }
 
@@ -407,12 +407,10 @@ void Node::draw() {
 
 	/* =================== PUT YOUR CODE HERE ====================== */
 	
-	
-	if (this->m_gObject!=0) {
-		rs->push(RenderState::modelview);
-		rs->addTrfm(RenderState::modelview, m_placement);
-		m_gObject->draw();
-		rs->pop(RenderState::modelview);
+	rs->push(RenderState::modelview);
+	rs->addTrfm(RenderState::modelview, m_placement);
+	if (this->m_gObject!=0) {		
+		m_gObject->draw();		
 	}
 
 	
@@ -420,6 +418,7 @@ void Node::draw() {
 		Node *theChild = *it;
 		theChild->draw();
 	}
+	rs->pop(RenderState::modelview);
 	
 	/* =================== END YOUR CODE HERE ====================== */
 
