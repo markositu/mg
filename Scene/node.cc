@@ -283,6 +283,7 @@ void Node::addChild(Node *theChild) {
 		// node does not have gObject, so attach child
 		theChild->m_parent=this;
 		m_children.push_back(theChild);
+		theChild->updateGS();
 	}
 }
 
@@ -356,6 +357,19 @@ void Node::updateBB () {
 //    See Recipe 1 in for knowing how to iterate through children.
 
 void Node::updateWC() {
+	if (m_parent == 0) {
+		m_placementWC->clone(m_placement);
+	} 
+	else {
+
+		m_placementWC->clone(m_parent->m_placementWC);
+		m_placementWC->add(m_placement);
+	}
+
+	for(list<Node *>::iterator it = m_children.begin(), end = m_children.end();it != end; ++it) {
+		Node *theChild = *it;
+		theChild->updateWC();
+	}
 
 }
 
@@ -368,6 +382,7 @@ void Node::updateWC() {
 // - Propagate Bounding Box to root (propagateBBRoot), starting from the parent, if parent exists.
 
 void Node::updateGS() {
+	updateWC();
 
 }
 
@@ -407,10 +422,12 @@ void Node::draw() {
 
 	/* =================== PUT YOUR CODE HERE ====================== */
 	
+	
+	if (this->m_gObject!=0) {
 	rs->push(RenderState::modelview);
-	rs->addTrfm(RenderState::modelview, m_placement);
-	if (this->m_gObject!=0) {		
-		m_gObject->draw();		
+	rs->addTrfm(RenderState::modelview, m_placementWC);		
+	m_gObject->draw();
+	rs->pop(RenderState::modelview);		
 	}
 
 	
@@ -418,7 +435,7 @@ void Node::draw() {
 		Node *theChild = *it;
 		theChild->draw();
 	}
-	rs->pop(RenderState::modelview);
+	
 	
 	/* =================== END YOUR CODE HERE ====================== */
 
