@@ -309,6 +309,8 @@ void Node::detach() {
 //    - placementWC of node and parents are up-to-date
 
 void Node::propagateBBRoot() {
+	for (Node *nodo = this; nodo!=0; nodo = nodo->m_parent)
+		nodo->updateBB();
 
 }
 
@@ -338,6 +340,17 @@ void Node::propagateBBRoot() {
 //    See Recipe 1 in for knowing how to iterate through children.
 
 void Node::updateBB () {
+	if (m_gObject) {
+		m_containerWC->clone(m_gObject->getContainer());
+		m_containerWC->transform(m_placementWC);
+	} 
+	else {
+		m_containerWC->init();
+		for(list<Node *>::iterator it = m_children.begin(), end = m_children.end();it != end; ++it) {
+			Node *theChild = *it;
+			m_containerWC->include(theChild->m_containerWC);
+		}
+	}
 
 }
 
@@ -383,6 +396,7 @@ void Node::updateWC() {
 
 void Node::updateGS() {
 	updateWC();
+	this->m_parent->propagateBBRoot();
 
 }
 
