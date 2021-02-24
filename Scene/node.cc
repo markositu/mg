@@ -492,17 +492,19 @@ const Node *Node::checkCollision(const BSphere *bsph) const {
 	/* =================== PUT YOUR CODE HERE ====================== */
 	if ( BSphereBBoxIntersect(bsph,m_containerWC) == IINTERSECT) {
 		if(m_gObject){
+			printf("hola\n");
 			 return this; 
 		}
 		else{
 			for(list<Node *>::const_iterator it = m_children.begin(), end = m_children.end();it != end; ++it) {
 				const Node *theChild = *it;
-				if (theChild->checkCollision(bsph)!= 0){			
+				if (theChild->checkCollision(bsph)){	
 					return theChild;
 				}
 			}
+
 		}
 	}
-	else return 0;
+	return 0;
 	/* =================== END YOUR CODE HERE ====================== */
 }
