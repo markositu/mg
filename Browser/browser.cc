@@ -607,7 +607,11 @@ int main(int argc, char** argv) {
 		displayNode = create_scene();
 		// Other possible scenes:
 		//
-		// displayNode = create_scene_city();
+		//displayNode = create_scene_city();
+		//displayNode=create_scene_bmap();	
+		//displayNode=create_scene_noT();
+		//displayNode=create_scene_triang();
+
 	}
 
 	Scene::instance()->attach(displayNode);

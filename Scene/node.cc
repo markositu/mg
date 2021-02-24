@@ -383,6 +383,7 @@ void Node::updateWC() {
 		Node *theChild = *it;
 		theChild->updateWC();
 	}
+	updateBB();
 
 }
 
@@ -492,8 +493,7 @@ const Node *Node::checkCollision(const BSphere *bsph) const {
 	/* =================== PUT YOUR CODE HERE ====================== */
 	if ( BSphereBBoxIntersect(bsph,m_containerWC) == IINTERSECT) {
 		if(m_gObject){
-			printf("hola\n");
-			 return this; 
+			return this; 
 		}
 		else{
 			for(list<Node *>::const_iterator it = m_children.begin(), end = m_children.end();it != end; ++it) {
@@ -501,7 +501,9 @@ const Node *Node::checkCollision(const BSphere *bsph) const {
 				if (theChild->checkCollision(bsph)){	
 					return theChild;
 				}
+
 			}
+			
 
 		}
 	}
