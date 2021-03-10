@@ -212,9 +212,9 @@ Vector3 Trfm3D::transformPoint(const Vector3 & P) const {
 
 Vector3 Trfm3D::transformVector(const Vector3 & V) const {
 	Vector3 res;
-	res.x()=m_c1.x()*V.x()*m_scl+m_c2.x()*V.y()*m_scl+m_c3.x()*V.z()*m_scl;
-	res.y()=m_c1.y()*V.x()*m_scl+m_c2.y()*V.y()*m_scl+m_c3.y()*V.z()*m_scl;
-	res.z()=m_c1.z()*V.x()*m_scl+m_c2.z()*V.y()*m_scl+m_c3.z()*V.z()*m_scl;
+	res[0]=m_c1.x()*V.x()*m_scl+m_c2.x()*V.y()*m_scl+m_c3.x()*V.z()*m_scl;
+	res[1]=m_c1.y()*V.x()*m_scl+m_c2.y()*V.y()*m_scl+m_c3.y()*V.z()*m_scl;
+	res[2]=m_c1.z()*V.x()*m_scl+m_c2.z()*V.y()*m_scl+m_c3.z()*V.z()*m_scl;
 
 	return res;
 }
