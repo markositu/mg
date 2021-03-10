@@ -23,10 +23,11 @@ Line & Line::operator=(const Line & line) {
 
 void Line::setFromAtoB(const Vector3 & A, const Vector3 & B) {
 Vector3 vecDir=B-A;
-	if(vecDir.length()> vecDir.epsilon){
+	if(vecDir.length()> 0.000000001){
         m_O=A;
-        m_d=vecDir;
+        m_d=vecDir.normalize();
     }
+    else printf("A and B are too close\n");
 }
 
 // @@ TODO: Give the point corresponding to parameter u
