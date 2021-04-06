@@ -423,7 +423,10 @@ void Node::draw() {
 	ShaderProgram *prev_shader = 0;
 	RenderState *rs = RenderState::instance();
 
-	if (m_isCulled) return;
+	if (m_isCulled==1) {
+			
+		return;
+	}
 
 	// Set shader (save previous)
 	if (m_shader != 0) {
@@ -475,6 +478,24 @@ void Node::setCulled(bool culled) {
 //          update m_isCulled accordingly.
 
 void Node::frustumCull(Camera *cam) {
+	unsigned int planesbit[]={0,0,0,0,0,0};
+	if (m_gObject){
+		if(cam->checkFrustum(this->m_containerWC,planesbit)==IREJECT){
+			m_isCulled=1;
+		}
+		else m_isCulled=0;
+	}
+	else{
+		m_isCulled=0;
+		for(list<Node *>::iterator it = m_children.begin(), end = m_children.end();
+		it != end; ++it) {
+			Node *theChild = *it;
+			theChild->frustumCull(cam);
+		}
+
+
+	}
+
 
 }
 

@@ -306,8 +306,27 @@ void  Camera::arcLeftRight(float angle) {
 
 int Camera::checkFrustum(const BBox *theBBox,
 						 unsigned int *planesBitM) {
+	
+	int intersection;
+	int res=-IREJECT;
+	//se hace un bucle para cada plano del fustrum
+	for (int i=0; i<=5; i++){
+		intersection=BBoxPlaneIntersect(theBBox,this->m_fPlanes[i]);
+		//si el bbox esta fuera de cualquier plano se sabe que no esta en la piramide de vision
+		if (intersection==IREJECT){
+			return IREJECT;
+		}
+		//si el bbox intersecta con un plano, se siguen mirando los demas planos y se anota, si esta dentro de los demás planos intersecta
+		else if(intersection == IINTERSECT){
+			res=IINTERSECT;
 
-	return -1; // BBox is fully inside the frustum
+			
+		}
+		else{planesBitM[i]==1;}
+	}
+
+	//si no intersecta ni esta fuera, esta dentro
+	return res; 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

@@ -235,7 +235,6 @@ static void Display() {
 	if (!theCamera) return; // no main camera
 
 	Scene::instance()->rootNode()->frustumCull(theCamera); // Frustum Culling
-
 	Render(theCamera);
 	glutSwapBuffers();
 }
