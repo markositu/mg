@@ -89,7 +89,10 @@ void Light::placeScene() {
 	Trfm3D &modelView = rs->top(RenderState::modelview);
 
 	/* =================== PUT YOUR CODE HERE ====================== */
-	m_positionEye= modelView.transformVector(m_position);
+	if(m_type==directional){
+		m_positionEye= modelView.transformVector(m_position);
+	}
+	
 	
 	/* =================== END YOUR CODE HERE ====================== */
 }
