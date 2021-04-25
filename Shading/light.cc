@@ -93,8 +93,9 @@ void Light::placeScene() {
 		m_positionEye= modelView.transformPoint(m_position);
 		}
 	if( m_type==spotlight){
+		m_spotDirectionEye= modelView.transformVector(rs->getCamera()->getDirection());
 		m_positionEye= modelView.transformPoint(m_position);
-		m_spotDirectionEye= modelView.transformVector(m_position);
+		
 	}
 	if (m_type==directional){
 		m_positionEye= modelView.transformVector(m_position);
