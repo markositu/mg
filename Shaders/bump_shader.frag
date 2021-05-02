@@ -33,4 +33,6 @@ varying vec3 f_spotDirection[4];  // tangent space
 
 void main() {
 	gl_FragColor = vec4(1.0);
+	vec4 rgbaBump   = texture2D(bumpmap, f_texCoord);
+	vec3 rgb_normal = rgbaBump.xyz * 0.5 + 0.5;
 }

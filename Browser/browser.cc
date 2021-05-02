@@ -574,6 +574,7 @@ void animate(int value) {
 	if (runAnimation) {
 		// Force a redisplay to render the new image
 
+		RenderState::instance()->setCloudsOffset(RenderState::instance()->getCloudsOffset()+0.001);
 		glutPostRedisplay();
 	}
 	// ##### END OF GAME/APP MAIN CODE #####

@@ -200,7 +200,9 @@ public:
 	bool getBBoxDraw() const;
 
 	void print() const;
-
+	//clouds
+	float getCloudsOffset();
+	void  setCloudsOffset(float offset);
 private:
 	RenderState();
 	~RenderState();
@@ -241,4 +243,6 @@ private:
 	// SkyBox
 
 	Node *m_skybox;
+	//cloudsOffset
+	float m_cloudsOffset;
 };

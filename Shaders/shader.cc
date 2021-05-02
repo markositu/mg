@@ -280,6 +280,14 @@ void ShaderProgram::beforeDraw() {
 			Camera *cam = rs->getCamera();
 			send_uniform("campos", cam->getPosition());
 		}
+		if (this->has_capability("multitex")){
+			tex = TextureManager::instance()->find("multitex");
+			Texture *tex2= mat->getTexture(1);
+			tex2->bindGLUnit(Constants::gl_texunits::rest);
+			this->send_uniform("texture1", Constants::gl_texunits::rest);
+			this->send_uniform("uCloudOffset", rs->getCloudsOffset());
+				
+		}
 	}
 }
 

@@ -12,8 +12,10 @@ void main() {
 
 	// The final color must be a linear combination of both
 	// textures with a factor of 0.5, e.g:
-	//
-	// color = 0.5 * texture0 + 0.5 * texture1
-
-	gl_FragColor = vec4(1.0);
+	// ref = https://www.khronos.org/opengl/wiki/Multitexture_with_GLSL 
+	vec4 texColor,texColor2,color;
+	texColor = texture2D(texture0, f_texCoord);
+	texColor2 = texture2D(texture1, f_texCoord+uCloudOffset);
+	color = 0.5 * texColor + 0.5 * texColor2;
+	gl_FragColor = f_color*color;
 }
