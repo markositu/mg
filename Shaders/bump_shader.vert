@@ -34,7 +34,25 @@ varying vec2 f_texCoord;
 varying vec3 f_viewDirection;     // tangent space
 varying vec3 f_lightDirection[4]; // tangent space
 varying vec3 f_spotDirection[4];  // tangent space
+varying vec3 f_position;
 
 void main() {
 	gl_Position = modelToClipMatrix * vec4(v_position, 1.0);
+
+	vec3 normal=normalize((modelToCameraMatrix*vec4(v_normal, 0.0)).xyz);
+	vec3 tangent=normalize((modelToCameraMatrix*vec4(v_TBN_t, 0.0)).xyz);
+	vec3 bitangent=normalize((modelToCameraMatrix*vec4(v_TBN_b, 0.0)).xyz);
+	mat3 TBN=transpose(mat3(
+        tangent,
+        bitangent,
+        normal
+    ));
+	f_position=TBN*(modelToCameraMatrix*vec4(v_position, 1.0)).xyz;
+	f_viewDirection=((-f_position));
+	for (int light=0;light<active_lights_n;light++){
+		f_lightDirection[light]=(TBN*(theLights[light].position).xyz);
+		f_spotDirection[light]=(TBN*theLights[light].spotDir);
+	}
+	
+	f_texCoord=v_texCoord;
 }

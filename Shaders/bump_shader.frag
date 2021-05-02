@@ -30,9 +30,81 @@ varying vec2 f_texCoord;
 varying vec3 f_viewDirection;     // tangent space
 varying vec3 f_lightDirection[4]; // tangent space
 varying vec3 f_spotDirection[4];  // tangent space
+varying vec3 f_position;
+
+float lambert_factor(vec3 n, const vec3 l){
+	//n es el vector normal
+	//l es el vector de la luz
+	return max(0,dot(n,l));
+}
+float specular_factor(const vec3 n, const vec3 l, const vec3 v, float m){
+// n es el vector normal
+// l es el vector de la luz
+// v es el vector que va a la cámara
+// m es el brillo del material
+// ( theMaterial.shininess)
+	vec3 r=reflect(-l,n);//https://learnopengl.com/Lighting/Basic-Lighting
+	return max(0,pow(dot(r,v),m));
+
+}
+
+void luz_direccional(vec3 N,vec3 V, int light,out vec3 i_difusa,out vec3 i_especular){
+	vec3 L=normalize(f_lightDirection[light]*-1);
+	i_difusa=lambert_factor(N,L)*theLights[light].diffuse*theMaterial.diffuse;
+	i_especular= specular_factor(N,L,V,theMaterial.shininess)*theLights[light].specular*lambert_factor(N,L)*theMaterial.specular;
+}
+void luz_posicional(vec3 positionEye,vec3 N,vec3 V, int light,out vec3 i_difusa,out vec3 i_especular){
+	vec3 L=normalize(f_lightDirection[light].xyz-positionEye);
+	float d=distance(positionEye,f_lightDirection[light].xyz);
+	float atenuacion=1/(theLights[light].attenuation.x+theLights[light].attenuation.y*d+theLights[light].attenuation.z*pow(d,2));
+	i_difusa=atenuacion*lambert_factor(N,L)*theLights[light].diffuse*theMaterial.diffuse;
+	i_especular=atenuacion* specular_factor(N,L,V,theMaterial.shininess)*theLights[light].specular*lambert_factor(N,L)*theMaterial.specular;	
+}
+void luz_foco(vec3 N,vec3 V, int light,out vec3 i_difusa,out vec3 i_especular){
+	vec3 L=V;
+	vec3 S=normalize(f_spotDirection[light]);
+	float Os=dot(-L,S);
+	if(Os<theLights[light].cosCutOff){
+		i_difusa=vec3(0,0,0);
+		i_especular=vec3(0,0,0);
+	}
+	else{
+		float cspot=pow(max(Os,0),theLights[light].exponent);
+		i_difusa=cspot*lambert_factor(N,L)*theLights[light].diffuse*theMaterial.diffuse;
+		i_especular= cspot*specular_factor(N,L,V,theMaterial.shininess)*theLights[light].specular*lambert_factor(N,L)*theMaterial.specular;
+	}
+}
+
 
 void main() {
-	gl_FragColor = vec4(1.0);
-	vec4 rgbaBump   = texture2D(bumpmap, f_texCoord);
-	vec3 rgb_normal = rgbaBump.xyz * 0.5 + 0.5;
+	
+      
+	vec4 rgb_normal   = texture2D(bumpmap, f_texCoord);
+	vec3 normal = rgb_normal.xyz  * 2.0 - 1.0;
+	///
+	vec3 V=normalize(f_viewDirection);
+	vec3 N=normalize(normal);
+	//aquí calculo f_color en funcion del pixel
+	vec3 i_difusa,i_especular,acumulador_difuso,acumulador_especular;
+	acumulador_difuso=vec3(0,0,0);
+	acumulador_especular=vec3(0,0,0);
+	for (int light=0;light<active_lights_n;light++){
+		if (theLights[light].cosCutOff!=0)luz_foco(N,V,light,i_difusa,i_especular);
+		else{
+			if(theLights[light].position.w==0)luz_direccional(N,V,light,i_difusa,i_especular);
+			else luz_posicional(f_position,N,V,light,i_difusa,i_especular);
+		}
+		acumulador_difuso+=i_difusa;
+		acumulador_especular+=i_especular;
+		
+
+		
+	}
+	vec4 f_color=vec4(scene_ambient+acumulador_difuso+acumulador_especular,1);
+
+	//esto se mantiene igual
+	vec4 texColor;
+	texColor = texture2D(texture0, f_texCoord);
+	gl_FragColor = f_color*texColor;
+
 }
