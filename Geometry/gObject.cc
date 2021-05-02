@@ -123,21 +123,6 @@ void GObject::setSmooth() {
 	}
 }
 
-	// Set texture to all meshes inside this gObject
-void  GObject::setTexture(Texture *tex) {
-	Material *mat;
-	for(list<TriangleMesh *>::iterator it = m_meshes.begin(), end = m_meshes.end();
-		it != end; ++it) {
-		mat = (*it)->getMaterial();
-		mat->setTexture(tex);
-	}
-	for(list<TriangleMesh *>::iterator it = m_meshes_transp.begin(), end = m_meshes_transp.end();
-		it != end; ++it) {
-		mat = (*it)->getMaterial();
-		mat->setTexture(tex);
-	}
-}
-
 
 int  GObject::numTriangles() const {
 	int      numPols = 0;
@@ -175,6 +160,21 @@ void GObject::setMaterial(Material *mat) {
 	for(auto it = m_meshes_transp.begin(), end = m_meshes_transp.end();
 		it != end; ++it) {
 		(*it)->setMaterial(mat);
+	}
+}
+
+	// Set texture to all meshes inside this gObject
+void  GObject::setTexture(Texture *tex) {
+	Material *mat;
+	for(list<TriangleMesh *>::iterator it = m_meshes.begin(), end = m_meshes.end();
+		it != end; ++it) {
+		mat = (*it)->getMaterial();
+		mat->setTexture(tex);
+	}
+	for(list<TriangleMesh *>::iterator it = m_meshes_transp.begin(), end = m_meshes_transp.end();
+		it != end; ++it) {
+		mat = (*it)->getMaterial();
+		mat->setTexture(tex);
 	}
 }
 

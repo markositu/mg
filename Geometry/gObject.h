@@ -53,6 +53,8 @@ public:
 	// Set gObject to be smooth.
 	void setSmooth();
 
+	// Set one material to all meshes
+	void setMaterial(Material *mat);
 	void setTexture(Texture *tex); //!< Set texture to all meshes inside this gObject
 
 	int  numTriangles() const; //!< Number of triangles in the GObject
@@ -61,9 +63,6 @@ public:
 
 	size_t size() const; // number of tmeshes
 	TriangleMesh *at(size_t idx); // get ith mesh
-
-	// Set one material to all meshes
-	void setMaterial(Material *mat);
 
 	friend class GObjectManager;
 

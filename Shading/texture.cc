@@ -9,6 +9,8 @@ using std::string;
 
 static const char *TT_string(Texture::type_t e);
 static const char *PT_string(GLenum e);
+static GLenum PT_string_inv(const std::string & str);
+bool isMipmapFilter(GLenum filter);
 
 Texture::Texture() :
 	m_type(empty),
@@ -25,7 +27,7 @@ Texture::Texture() :
 	m_minFilter(GL_LINEAR),
 	m_wrapS(GL_REPEAT),
 	m_wrapT(GL_REPEAT),
-	m_img(0) {
+	m_imgs() {
 	//Allocates a texture name
 	glGenTextures( 1, &m_id );
 }
@@ -49,34 +51,57 @@ Texture::Texture(const std::string & name) :
 	m_minFilter(GL_LINEAR),
 	m_wrapS(GL_REPEAT),
 	m_wrapT(GL_REPEAT),
-	m_img(0) {
+	m_imgs() {
 	glGenTextures( 1, &m_id );
 }
 
 Texture::type_t Texture::getType() const { return m_type; }
 
-void Texture::setImage(const string &FileName) {
-
-	if(m_img) {
+void Texture::loadImage(const string &FileName) {
+	if(m_imgs.size()) {
 		//remove image data from openGL
 		glDeleteTextures(1, &m_id);
 		//Allocates a texture name
 		glGenTextures(1, &m_id);
+		std::vector<Image *>().swap(m_imgs);
 	}
-
-	m_type = tex;
-	m_img = ImageManager::instance()->create(FileName);
-	m_size = m_img->getSize();
-	m_height = m_img->getHeight();
-	m_width = m_img->getWidth();
-	m_components = m_img->getComponents();
+	m_imgs.push_back(ImageManager::instance()->create(FileName));
+	Image *img_ptr = m_imgs[0];
+	m_size = img_ptr->getSize();
+	m_height = img_ptr->getHeight();
+	m_width = img_ptr->getWidth();
+	m_components = img_ptr->getComponents();
 	if (m_components == 1)
 		m_format = GL_RED;
 	else if (m_components == 3)
 		m_format = GL_RGB;
 	else if (m_components == 4)
 		m_format = GL_RGBA;
+}
 
+void Texture::loadCubemapImages(const string &xpos, const string &xneg,
+								const string &ypos, const string &yneg,
+								const string &zpos, const string &zneg) {
+	const string *names[6] = { &xpos, &xneg, &ypos, &yneg, &zpos, &zneg };
+	Image *img;
+	ImageManager *imgr = ImageManager::instance();
+	if(m_imgs.size()) {
+		//remove image data from openGL
+		glDeleteTextures(1, &m_id);
+		//Allocates a texture name
+		glGenTextures(1, &m_id);
+		std::vector<Image *>().swap(m_imgs);
+	}
+	for(int i = 0; i < 6; i++) {
+		img = imgr->create(*names[i], false);
+		m_imgs.push_back(img);
+	}
+}
+
+void Texture::setImage(const string &FileName) {
+
+	m_type = tex;
+	loadImage(FileName);
 	// Filters
 	if (m_mipmap) {
 		// Filters
@@ -86,38 +111,33 @@ void Texture::setImage(const string &FileName) {
 		m_magFilter = GL_LINEAR;
 		m_minFilter = GL_LINEAR;
 	}
-	bindGL();
-	// Send image into openGL texture
-	sendImageGL();
 	// Send texture data to OpenGL (initialize OpenGL texture)
-	sendParamsGL(true);
-	unbindGL();
+	sendImageGL();
+	sendParamsGL();
 }
 
 void Texture::setBumpMap(const string &FileName) {
 
-	setImage(FileName);
+	m_type = bumpmap;
+	loadImage(FileName);
 	m_mipmap = 0; // no mipmap for bump textures
 	m_magFilter = GL_LINEAR;
 	m_minFilter = GL_LINEAR;
-	m_type = bumpmap;
-	bindGL();
-	sendParamsGL(true);
-	unbindGL();
+	sendImageGL();
+	sendParamsGL();
 }
 
 void Texture::setProj(const string &FileName) {
 
-	setImage(FileName);
-	m_mipmap = 0; // no mipmap for projective textures
 	m_type = proj;
+	loadImage(FileName);
+	m_mipmap = 0; // no mipmap for projective textures
 	m_magFilter = GL_LINEAR;
 	m_minFilter = GL_LINEAR;
 	m_wrapS = GL_CLAMP_TO_BORDER;
 	m_wrapT = GL_CLAMP_TO_BORDER;
-	bindGL();
-	sendParamsGL(true);
-	unbindGL();
+	sendImageGL();
+	sendParamsGL();
 }
 
 void Texture::setCubeMap(const string &xpos, const string &xneg,
@@ -125,49 +145,28 @@ void Texture::setCubeMap(const string &xpos, const string &xneg,
 						 const string &zpos, const string &zneg) {
 
 	m_type = cubemap;
+	loadCubemapImages(xpos, xneg, ypos, yneg, zpos, zneg);
 	m_target = GL_TEXTURE_CUBE_MAP;
-
-	Image *img;
-	int i = 0;
-	GLuint targets[6] = {
-		GL_TEXTURE_CUBE_MAP_POSITIVE_X,
-		GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
-		GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
-		GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-		GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
-		GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-	};
-	const string *names[6] = { &xpos, &xneg, &ypos, &yneg, &zpos, &zneg };
-
 	/* // Typical cube map settings */
 	m_magFilter = GL_LINEAR;
 	m_minFilter = GL_LINEAR;
 	m_wrapS = GL_CLAMP_TO_EDGE;
 	m_wrapT = GL_CLAMP_TO_EDGE;
 	m_wrapR = GL_CLAMP_TO_EDGE;
-	ImageManager *imgr = ImageManager::instance();
-	bindGL();
-	for(i = 0; i < 6; i++) {
-		img = imgr->create(*names[i], false);
-		glTexImage2D(targets[i], 0, 3,
-					 img->getWidth(), img->getHeight(),
-					 0, GL_RGB, GL_UNSIGNED_BYTE, img->getData());
-	}
-	sendParamsGL(true);
-	unbindGL();
+	sendImageGL();
+	sendParamsGL();
 }
 
 void Texture::setWhiteTexture() {
 
-	static unsigned char white[3] = {255, 255, 255};
-
-	if(m_img) {
+	if(m_imgs.size()) {
 		//remove image data from openGL
 		glDeleteTextures(1, &m_id);
 		//Allocates a texture name
 		glGenTextures( 1, &m_id );
-		m_img = 0;
+		std::vector<Image *>().swap(m_imgs);
 	}
+	m_type = white;
 	m_size = 3;
 	m_height = 1;
 	m_width = 1;
@@ -178,59 +177,106 @@ void Texture::setWhiteTexture() {
 	m_minFilter = GL_NEAREST;
 	m_wrapS = GL_REPEAT;
 	m_wrapT = GL_REPEAT;
-	// Set our texture as active
-	bindGL();
-	glTexImage2D( m_target, 0, m_components, m_width,
-				  m_height, 0, m_format, GL_UNSIGNED_BYTE,
-				  &white[0]);
-	// Send texture data to OpenGL (initialize OpenGL texture)
-	sendParamsGL(true);
-	unbindGL();
+	sendImageGL();
+	sendParamsGL();
 }
 
 /* Set/get functions */
 
-bool Texture::setMipmap(bool mipmap, bool bind) {
+bool Texture::setMipmap(bool mipmap) {
+	if (!mipmap && (isMipmapFilter(m_magFilter) || isMipmapFilter(m_minFilter))) {
+		fprintf(stderr, "[E] can not disable mipmap with mipmap filters\n");
+		exit(1);
+	}
 	bool old = m_mipmap;
 	m_mipmap = mipmap;
+	if (m_mipmap != old) sendImageGL();
 	return old;
 }
 bool Texture::getMipmap() const { return m_mipmap; }
 
-
 // Wrap
 
-void Texture::setWrapST(GLenum wrapS, GLenum wrapT, bool bind) {
+void Texture::setWrapST(GLenum wrapS, GLenum wrapT) {
 	m_wrapS = wrapS;
 	m_wrapT = wrapT;
-	sendParamsGL(bind);
+	sendParamsGL();
 }
 
-void Texture::setWrapS(GLenum wrapS, bool bind) {
+void Texture::setWrapS(GLenum wrapS) {
 	m_wrapS = wrapS;
-	sendParamsGL(bind);
+	sendParamsGL();
 }
 
-void Texture::setWrapT(GLenum wrapT, bool bind) {
+void Texture::setWrapT(GLenum wrapT) {
 	m_wrapT = wrapT;
-	sendParamsGL(bind);
+	sendParamsGL();
 }
+
+
+bool Texture::setWrapST(const std::string & wrapS,
+						const std::string & wrapT) {
+	GLenum wS;
+	wS = PT_string_inv(wrapS);
+	if (wS != GL_CLAMP && wS != GL_CLAMP_TO_BORDER && wS != GL_REPEAT)
+		return false;
+	GLenum wT = PT_string_inv(wrapT);
+	if (wT != GL_CLAMP && wT != GL_CLAMP_TO_BORDER && wT != GL_REPEAT)
+		return false;
+	setWrapST(wS, wT);
+	return true;
+}
+
 // Filters
 
-void Texture::setMinFilter(GLenum minFilter, bool bind) {
-	m_minFilter = minFilter;
-	sendParamsGL(bind);
+bool isMipmapFilter(GLenum filter) {
+	return
+		filter == GL_NEAREST_MIPMAP_LINEAR ||
+		filter == GL_NEAREST_MIPMAP_NEAREST ||
+		filter == GL_LINEAR_MIPMAP_LINEAR ||
+		filter == GL_LINEAR_MIPMAP_NEAREST;
 }
 
-void Texture::setMagFilter(GLenum magFilter, bool bind) {
-	m_magFilter = magFilter;
-	sendParamsGL(bind);
+void Texture::setMinFilter(GLenum minFilter) {
+	bool isMipmap = isMipmapFilter(minFilter);
+	m_minFilter = minFilter;
+	if (isMipmap && !m_mipmap) {
+		m_mipmap = true;
+		sendImageGL();
+	}
+	sendParamsGL();
 }
 
-void Texture::setFilters(GLenum minFilter, GLenum magFilter, bool bind) {
+void Texture::setMagFilter(GLenum magFilter) {
+	bool isMipmap = isMipmapFilter(magFilter);
 	m_magFilter = magFilter;
-	m_minFilter = minFilter;
-	sendParamsGL(bind);
+	if (isMipmap && !m_mipmap) {
+		m_mipmap = true;
+		sendImageGL();
+	}
+	sendParamsGL();
+}
+
+void Texture::setFilters(GLenum minFilter, GLenum magFilter) {
+	setMinFilter(minFilter);
+	setMagFilter(magFilter);
+}
+
+bool Texture::setFilters(const std::string & minFilter,
+						 const std::string & magFilter) {
+	GLenum wS;
+	GLenum minf = PT_string_inv(minFilter);
+	GLenum magf = PT_string_inv(magFilter);
+	if (minf != GL_LINEAR && minf != GL_NEAREST && minf != GL_NEAREST_MIPMAP_LINEAR &&
+		minf != GL_NEAREST_MIPMAP_NEAREST && minf != GL_LINEAR_MIPMAP_LINEAR &&
+		minf != GL_LINEAR_MIPMAP_NEAREST)
+		return false;
+	if (magf != GL_LINEAR && magf != GL_NEAREST && magf != GL_NEAREST_MIPMAP_LINEAR &&
+		magf != GL_NEAREST_MIPMAP_NEAREST && magf != GL_LINEAR_MIPMAP_LINEAR &&
+		magf != GL_LINEAR_MIPMAP_NEAREST)
+		return false;
+	setFilters(minf, magf);
+	return true;
 }
 
 
@@ -304,8 +350,8 @@ void Texture::cycleMinFilter() {
 }
 
 int Texture::saveJPG(const std::string &fname) const {
-	if (!m_img) return 0;
-	return m_img->saveJPG(fname);
+	if (!m_imgs.size()) return 0;
+	return m_imgs[0]->saveJPG(fname);
 }
 
 /**
@@ -321,9 +367,9 @@ int Texture::saveJPG(const std::string &fname) const {
  *
  */
 
-void Texture::sendParamsGL(bool bind) {
+void Texture::sendParamsGL() {
 
-	if (bind) bindGL();
+	bindGL();
 	// Set OpenGL texture wrap
 	glTexParameteri( m_target, GL_TEXTURE_WRAP_S, m_wrapS);
 	glTexParameteri( m_target, GL_TEXTURE_WRAP_T, m_wrapT);
@@ -334,7 +380,7 @@ void Texture::sendParamsGL(bool bind) {
 	// Set OpenGL texture filters
 	glTexParameteri( m_target, GL_TEXTURE_MAG_FILTER, m_magFilter);
 	glTexParameteri( m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
-	if (bind) unbindGL();
+	unbindGL();
 }
 
 /**
@@ -351,19 +397,47 @@ void Texture::sendParamsGL(bool bind) {
 
 void Texture::sendImageGL() {
 
-	if (!m_img) return;
+	Image *img_ptr;
+	static unsigned char whiteRGB[3] = {255, 255, 255};
 
-	if (m_img->getHeight() && m_img->getWidth()) {
+	bindGL();
+	if (m_type == white) {
+		glTexImage2D( m_target, 0, m_components, m_width,
+					  m_height, 0, m_format, GL_UNSIGNED_BYTE,
+					  &whiteRGB[0]);
+		return;
+	}
+	if (!m_imgs.size()) return;
+	if (m_type == cubemap) {
+		GLuint targets[6] = {
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+			GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+			GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+			GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+		};
+		for(int i = 0; i < m_imgs.size(); i++) {
+			img_ptr = m_imgs[i];
+			glTexImage2D(targets[i], 0, 3,
+						 img_ptr->getWidth(), img_ptr->getHeight(),
+						 0, GL_RGB, GL_UNSIGNED_BYTE, img_ptr->getData());
+		}
+		return;
+	}
+	img_ptr = m_imgs[0];
+	if (img_ptr->getHeight() && img_ptr->getWidth()) {
 		// Load image to OpenGL texture
 		if (m_mipmap) {
-			gluBuild2DMipmaps(m_target, m_components, m_img->getWidth(), m_img->getHeight(),
-							  m_format, GL_UNSIGNED_BYTE, m_img->getData());
+			gluBuild2DMipmaps(m_target, m_components, img_ptr->getWidth(), img_ptr->getHeight(),
+							  m_format, GL_UNSIGNED_BYTE, img_ptr->getData());
 		} else {
-			glTexImage2D( m_target, 0, m_components, m_img->getWidth(),
-						  m_img->getHeight(), 0, m_format, GL_UNSIGNED_BYTE,
-						  m_img->getData());
+			glTexImage2D( m_target, 0, m_components, img_ptr->getWidth(),
+						  img_ptr->getHeight(), 0, m_format, GL_UNSIGNED_BYTE,
+						  img_ptr->getData());
 		}
 	}
+	unbindGL();
 }
 
 static const char *TT_string(Texture::type_t e) {
@@ -389,11 +463,25 @@ static const char *PT_string(GLenum e) {
 	int i;
 	int m;
 
-	m = sizeof(T) / sizeof(const string &);
+	m = sizeof(N) / sizeof(GLenum);
 	for(i=0; i < m; i++) {
 		if (e == N[i]) return T[i];
 	}
 	return "<unknown>";
+}
+
+static GLenum PT_string_inv(const std::string & str) {
+
+	static GLenum N[] = {GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, GL_CLAMP, GL_CLAMP_TO_BORDER, GL_REPEAT, GL_LINEAR, GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_RGB, GL_RGB8, GL_DEPTH_COMPONENT};
+	static const char * T[]  = {"GL_TEXTURE_2D", "GL_TEXTURE_CUBE_MAP", "GL_CLAMP", "GL_CLAMP_TO_BORDER", "GL_REPEAT", "GL_LINEAR", "GL_NEAREST", "GL_NEAREST_MIPMAP_LINEAR", "GL_NEAREST_MIPMAP_NEAREST", "GL_LINEAR_MIPMAP_LINEAR", "GL_LINEAR_MIPMAP_NEAREST", "GL_RGB", "GL_RGB8", "GL_DEPTH_COMPONENT"};
+	int i;
+	int m;
+
+	m = sizeof(N) / sizeof(GLenum);
+	for(i=0; i < m; i++) {
+		if (str == string(T[i])) return N[i];
+	}
+	return 0;
 }
 
 const std::string &Texture::getName() const {
@@ -403,14 +491,13 @@ const std::string &Texture::getName() const {
 void Texture::print() const {
 
 	printf("Texture id:%d\tName: %s\tType: %s\ttarget:%s\n", m_id, m_name.c_str(), TT_string(m_type), PT_string(m_target));
-	if (!m_img) {
-		printf ("No jpeg image\n");
-	} else {
-		printf("JPG image: %s\tResolution: %d x %d\tSize: %lu\tMipmap: %d\tData: %p\n", m_img->getName(), m_img->getWidth(), m_img->getHeight(),
-			   m_size, m_mipmap, m_img->getData());
+	printf("Images (%lu):\n", m_imgs.size());
+	for(int i = 0; i < m_imgs.size(); ++i){
+		printf("  Image: %s\tResolution: %d x %d\tSize: %lu\tMipmap: %d\tData: %p\n", m_imgs[i]->getName(), m_imgs[i]->getWidth(), m_imgs[i]->getHeight(),
+			   m_size, m_mipmap, m_imgs[i]->getData());
 
 	}
-	if (!m_img && m_size) {
+	if (!m_imgs.size() && m_size) {
 		printf("Generated image\tResolution: %d x %d \t Size: %lu\tMipmap: %d\n", m_width, m_height,
 			   m_size, m_mipmap);
 	}

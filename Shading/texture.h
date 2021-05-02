@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include "image.h"
@@ -13,6 +14,7 @@ public:
 
 	enum type_t {
 		empty,    // empty texture
+		white,    // white 1x1 texture
 		tex,      // texture (from JPG)
 		rt_depth, // Depth texture (render texture)
 		rt_color, // Color texture (render testure)
@@ -36,20 +38,23 @@ public:
 	/////////////////////////////////////////////////
 	// Functions for changing the texture parameters
 
-	bool setMipmap(bool mipmap, bool bind = true);
+	bool setMipmap(bool mipmap);
 	bool getMipmap() const;
 
 	// Wrap
 
-	void setWrapST(GLenum wrapS, GLenum wrapT, bool bind = true);
-	void setWrapS(GLenum wrapS, bool bind = true);
-	void setWrapT(GLenum wrapT, bool bind = true);
+	bool setWrapST(const std::string & wrapS, const std::string & wrapT);
+	void setWrapST(GLenum wrapS, GLenum wrapT);
+	void setWrapS(GLenum wrapS);
+	void setWrapT(GLenum wrapT);
 
 	// Filters
 
-	void setMinFilter(GLenum minFilter, bool bind = true);
-	void setMagFilter(GLenum magFilter, bool bind = true);
-	void setFilters(GLenum minFilter, GLenum magFilter, bool bind = true);
+	bool setFilters(const std::string & minFilter,
+					const std::string & magFilter);
+	void setMinFilter(GLenum minFilter);
+	void setMagFilter(GLenum magFilter);
+	void setFilters(GLenum minFilter, GLenum magFilter);
 
 	//
 	// bind/unbind openGL
@@ -96,14 +101,19 @@ protected:
 	int m_components;    // number of components of each pixel (3 or 1)
 	GLuint m_format;     // format of pixels (GL_RGB or DEPTH_COMPONENT)
 
-private:
+protected:
 	// Create, Destroy & Copy functions
 	Texture(const std::string &);
 	Texture(const Texture &);
 	Texture & operator =(const Texture &);
 
+	void loadImage(const std::string &fname);
+	void loadCubemapImages(const std::string &xpos, const std::string &xneg,
+						   const std::string &ypos, const std::string &yneg,
+						   const std::string &zpos, const std::string &zneg); // cubemap textures (jpg)
+
 	void sendImageGL();
-	void sendParamsGL(bool bind);
+	void sendParamsGL();
 	// Get image from OpenGL and store it in memory
 	void SyncOpenGLTexture();
 
@@ -118,5 +128,5 @@ private:
 	GLenum m_wrapS;     // GL_CLAMP, GL_REPEAT. Default GL_REPEAT.
 	GLenum m_wrapT;     // GL_CLAMP, GL_REPEAT. Default GL_REPEAT.
 	GLenum m_wrapR;     // GL_CLAMP, GL_REPEAT.
-	Image *m_img;       // jpg image
+	std::vector<Image *> m_imgs;  // jpg images
 };

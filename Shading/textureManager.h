@@ -21,13 +21,13 @@ public:
 	 * @param fName: The file name of the texture
 	 * @return the texture
 	 */
-	Texture *create(const std::string & fName);
+	Texture *create(const std::string & texName, const std::string & fName = std::string());
 
 	// create bump texture
-	Texture *createBumpMap(const std::string & fName);
+	Texture *createBumpMap(const std::string & texName, const std::string & fName = std::string());
 
 	// create projective texture
-	Texture *createProj(const std::string & fName);
+	Texture *createProj(const std::string & texName, const std::string & fName = std::string());
 
 	// create cubemap texture
 	// needs 6 image files

@@ -19,7 +19,7 @@ TextureRT::TextureRT(Texture::type_t mode, int w, int h) :
 	m_oldViewport[1] = 0;
 	m_oldViewport[2] = 0;
 	m_oldViewport[3] = 0;
-	setMipmap(false);
+	m_mipmap = 0;
 	m_height = h;
 	m_width = w;
 	if (m_type == Texture::rt_depth) {
@@ -36,8 +36,14 @@ TextureRT::TextureRT(Texture::type_t mode, int w, int h) :
 	}
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(m_target, m_id );
-	setFilters(GL_NEAREST, GL_NEAREST, false);
-	setWrapST(GL_CLAMP, GL_CLAMP, false);
+	m_magFilter = GL_NEAREST;
+	m_minFilter = GL_NEAREST;
+	m_wrapS = GL_CLAMP;
+	m_wrapT = GL_CLAMP;
+	glTexParameteri( m_target, GL_TEXTURE_MAG_FILTER, m_magFilter);
+	glTexParameteri( m_target, GL_TEXTURE_MIN_FILTER, m_minFilter);
+	glTexParameteri( m_target, GL_TEXTURE_WRAP_S, m_wrapS);
+	glTexParameteri( m_target, GL_TEXTURE_WRAP_T, m_wrapT);
 	// Reclaim OpenGL space for image data
 	glTexImage2D(m_target, 0, m_format, m_width,
 				 m_height, 0, m_format, GL_UNSIGNED_BYTE,

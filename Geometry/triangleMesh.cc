@@ -398,17 +398,17 @@ static Material *create_mat(GLMmodel * m, GLMmaterial * mat, const string & DirN
 	TextureManager * texMgr = TextureManager::instance();
 	if (mat->texturemap) {
 		string image = getFilename(DirName, mat->texturemap);
-		newMaterial->setTexture(texMgr->create(image));
+		newMaterial->setTexture(texMgr->create(mat->texturemap, image));
 	}
 
 	if (mat->bumpmap) {
 		string image = getFilename(DirName, mat->bumpmap);
-		newMaterial->setBumpMap(texMgr->createBumpMap(image));
+		newMaterial->setBumpMap(texMgr->createBumpMap(mat->bumpmap, image));
 	}
 
 	if (mat->specularmap) {
 		string image = getFilename(DirName, mat->specularmap);
-		newMaterial->setSpecularMap(texMgr->createBumpMap(image));
+		newMaterial->setSpecularMap(texMgr->createBumpMap(mat->specularmap, image));
 	}
 	return newMaterial;
 }
@@ -739,8 +739,8 @@ Material *TriangleMesh::getMaterial(bool front) {
 }
 
 void TriangleMesh::setMaterial(Material *mat, bool front) {
-	if (front) m_materialFront = mat;
-	else m_materialBack = mat;
+	m_materialFront = mat;
+	m_materialBack = mat;
 }
 
 void TriangleMesh::print() const {

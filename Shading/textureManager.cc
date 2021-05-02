@@ -29,39 +29,42 @@ TextureManager::~TextureManager() {
 		delete it->second;
 }
 
-Texture *TextureManager::create(const std::string & fName) {
-	map<string, Texture *>::iterator it = m_hash.find(fName);
+Texture *TextureManager::create(const std::string & texName, const std::string & fileName) {
+	std::string fName = fileName.size() ? fileName : texName;
+	map<string, Texture *>::iterator it = m_hash.find(texName);
 	if (it != m_hash.end()) {
-		fprintf(stderr, "[W] duplicate texture %s\n", fName.c_str());
+		fprintf(stderr, "[W] duplicate texture %s\n", texName.c_str());
 		return it->second;
 	}
-	Texture * newtex = new Texture(fName);
+	Texture * newtex = new Texture(texName);
 	newtex->setImage(fName);
-	it = m_hash.insert(make_pair(fName, newtex)).first;
+	it = m_hash.insert(make_pair(texName, newtex)).first;
 	return it->second;
 }
 
-Texture *TextureManager::createBumpMap(const std::string & fName) {
-	map<string, Texture *>::iterator it = m_hash.find(fName);
+Texture *TextureManager::createBumpMap(const std::string & texName, const std::string & fileName) {
+	std::string fName = fileName.size() ? fileName : texName;
+	map<string, Texture *>::iterator it = m_hash.find(texName);
 	if (it != m_hash.end()) {
-		fprintf(stderr, "[W] duplicate texture %s\n", fName.c_str());
+		fprintf(stderr, "[W] duplicate texture %s\n", texName.c_str());
 		return it->second;
 	}
-	Texture * newtex = new Texture(fName);
+	Texture * newtex = new Texture(texName);
 	newtex->setBumpMap(fName);
-	it = m_hash.insert(make_pair(fName, newtex)).first;
+	it = m_hash.insert(make_pair(texName, newtex)).first;
 	return it->second;
 }
 
-Texture *TextureManager::createProj(const std::string & fName) {
-	map<string, Texture *>::iterator it = m_hash.find(fName);
+Texture *TextureManager::createProj(const std::string & texName, const std::string & fileName) {
+	std::string fName = fileName.size() ? fileName : texName;
+	map<string, Texture *>::iterator it = m_hash.find(texName);
 	if (it != m_hash.end()) {
-		fprintf(stderr, "[W] duplicate texture %s\n", fName.c_str());
+		fprintf(stderr, "[W] duplicate texture %s\n", texName.c_str());
 		return it->second;
 	}
-	Texture * newtex = new Texture(fName);
+	Texture * newtex = new Texture(texName);
 	newtex->setProj(fName);
-	it = m_hash.insert(make_pair(fName, newtex)).first;
+	it = m_hash.insert(make_pair(texName, newtex)).first;
 	return it->second;
 }
 

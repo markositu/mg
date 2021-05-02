@@ -72,6 +72,22 @@ static bool json_vec(Json::Value & o, Vector3 &res) {
 	return true;
 }
 
+static bool json_vec_string(Json::Value & o, vector<string> & names) {
+	if (o.isNull()) return true;
+	if (!o.isArray()) {
+		return false;
+	}
+	int n = o.size();
+	bool p;
+	for(int i = 0; i < n; i++) {
+		string name;
+		p = json_string(o[i], name);
+		if(!p) return false;
+		names.push_back(name);
+	}
+	return true;
+}
+
 //
 // possible keys
 //
@@ -86,7 +102,7 @@ static Trfm3D parse_trfm(Json::Value & jstrfm, const string & name) {
 	if(!jstrfm["trans"].isNull()) {
 		Vector3 T;
 		if(!json_vec(jstrfm["trans"], T)) {
-			fprintf(stderr, "[E] reading JSON file: invalid trans in node %s.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: invalid trans in node '%s'.\n", name.c_str());
 			exit(1);
 		}
 		res.setTrans(T);
@@ -98,7 +114,7 @@ static Trfm3D parse_trfm(Json::Value & jstrfm, const string & name) {
 		bool P = (json_vec(jsrotVec["vec"], V) &&
 				  (json_float(jsrotVec["angle"], r) && r != 0.0f));
 		if(!P) {
-			fprintf(stderr, "[E] reading JSON file: invalid rotVec in node %s.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: invalid rotVec in node '%s'.\n", name.c_str());
 			exit(1);
 		}
 		res.setRotVec(V, r);
@@ -112,7 +128,7 @@ static Trfm3D parse_trfm(Json::Value & jstrfm, const string & name) {
 				  json_vec(jsrotAxis["point"], Point) &&
 				  (json_float(jsrotAxis["angle"], r) && r != 0.0f));
 		if(!P) {
-			fprintf(stderr, "[E] reading JSON file: invalid rotAxis in node %s.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: invalid rotAxis in node '%s'.\n", name.c_str());
 			exit(1);
 		}
 		res.setRotAxis(V, Point, r);
@@ -122,7 +138,7 @@ static Trfm3D parse_trfm(Json::Value & jstrfm, const string & name) {
 		if (json_float(jstrfm["scale"], sc) && sc > Constants::distance_epsilon)
 			res.setScale(sc);
 		else {
-			fprintf(stderr, "[E] reading JSON file: invalid scale in node %s.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: invalid scale in node '%s'.\n", name.c_str());
 			exit(1);
 		}
 	}
@@ -131,7 +147,7 @@ static Trfm3D parse_trfm(Json::Value & jstrfm, const string & name) {
 
 static Trfm3D parse_trfms(Json::Value & jstrfm, const string & name) {
 	if (!jstrfm.isArray()) {
-		fprintf(stderr, "[E] reading JSON file: trfms has to be an array (node %s).\n", name.c_str());
+		fprintf(stderr, "[E] reading JSON file: trfms has to be an array (node '%s').\n", name.c_str());
 		exit(1);
 	}
 	int n = jstrfm.size();
@@ -164,7 +180,7 @@ static void populate_gObjs(Json::Value & gObjs) {
 			exit(1);
 		}
 		if (!json_string(gObj["dirname"], dirname)) {
-			fprintf(stderr, "[E] reading JSON file: gObj %s with no dirname.\n", fname.c_str());
+			fprintf(stderr, "[E] reading JSON file: gObj '%s' with no dirname.\n", fname.c_str());
 			exit(1);
 		}
 
@@ -179,7 +195,7 @@ static void populate_gObjs(Json::Value & gObjs) {
 		if (json_string(gObj["material"], matName)) {
 			Material * mat = MaterialManager::instance()->find(matName);
 			if (!mat) {
-				fprintf(stderr, "[E] reading JSON file: gObj %s/%s with invalid material %s.\n", dirname.c_str(), fname.c_str(), matName.c_str());
+				fprintf(stderr, "[E] reading JSON file: gObj '%s'/'%s' with invalid material '%s'.\n", dirname.c_str(), fname.c_str(), matName.c_str());
 				exit(1);
 			}
 			gobj->setMaterial(mat);
@@ -215,12 +231,12 @@ static void populate_avatars(Json::Value & avatars) {
 			exit(1);
 		}
 		if (!json_string(avatar["camera"], cameraName)) {
-			fprintf(stderr, "[E] reading JSON file: avatar %s with no camera.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: avatar '%s' with no camera.\n", name.c_str());
 			exit(1);
 		}
 		Camera *cam = CameraManager::instance()->find(cameraName);
 		if (!cam) {
-			fprintf(stderr, "[E] reading JSON file: avatar pointing to unkwnown camera %s.\n", cameraName.c_str());
+			fprintf(stderr, "[E] reading JSON file: avatar pointing to unkwnown camera '%s'.\n", cameraName.c_str());
 			exit(1);
 		}
 		float radius;
@@ -247,14 +263,14 @@ static void populate_cameras(Json::Value & cameras) {
 			exit(1);
 		}
 		if (!json_string(camera["type"], type)) {
-			fprintf(stderr, "[E] reading JSON file: camera %s has no type.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: camera '%s' has no type.\n", name.c_str());
 			exit(1);
 		}
 		P = (json_vec(camera["pos"], pos) &&
 			 json_vec(camera["lookAt"], at) &&
 			 json_vec(camera["up"], up));
 		if (!P) {
-			fprintf(stderr, "[E] reading JSON file: bad parameters for camera %s.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: bad parameters for camera '%s'.\n", name.c_str());
 			exit(1);
 		}
 		Camera *newCamera;
@@ -265,7 +281,7 @@ static void populate_cameras(Json::Value & cameras) {
 				 (json_float(camera["near"], near) && near > 0.0f) &&
 				 (json_float(camera["far"], far) && (far > near)));
 			if (!P) {
-				fprintf(stderr, "[E] reading JSON file: bad parameters for camera %s.\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: bad parameters for camera '%s'.\n", name.c_str());
 				exit(1);
 			}
 			PerspectiveCamera *newCamera = CameraManager::instance()->createPerspective(name);
@@ -280,14 +296,14 @@ static void populate_cameras(Json::Value & cameras) {
 				 (json_float(camera["top"], top)) &&
 				 (json_float(camera["bottom"], bottom) && (top > bottom)));
 			if (!P) {
-				fprintf(stderr, "[E] reading JSON file: bad parameters for camera %s.\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: bad parameters for camera '%s'.\n", name.c_str());
 				exit(1);
 			}
 			OrthographicCamera *newCamera = CameraManager::instance()->createOrthographic(name);
 			newCamera->init(left, right, bottom, top, near, far);
 			newCamera->lookAt(pos, at, up);
 		} else {
-			fprintf(stderr, "[E] reading JSON file: camera %s has unknown type %s.\n", name.c_str(), type.c_str());
+			fprintf(stderr, "[E] reading JSON file: camera '%s' has unknown type '%s'.\n", name.c_str(), type.c_str());
 			exit(1);
 		}
 	}
@@ -317,12 +333,12 @@ static void populate_lights(Json::Value & lights) {
 			exit(1);
 		}
 		if (!json_string(light["type"], type)) {
-			fprintf(stderr, "[E] reading JSON file: light %s has  type.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: light '%s' has  type.\n", name.c_str());
 			exit(1);
 		}
 		Light::type_t ltype = check_light_type(type);
 		if (ltype == Light::invalid) {
-			fprintf(stderr, "[E] reading JSON file: light %s has invalid type %s (possible values \"positional\", \"directional\", \"spotlight\")\n", name.c_str(), type.c_str());
+			fprintf(stderr, "[E] reading JSON file: light '%s' has invalid type '%s' (possible values \"positional\", \"directional\", \"spotlight\")\n", name.c_str(), type.c_str());
 			exit(1);
 		}
 		Vector3 pos, amb, dif, spec, att;
@@ -331,7 +347,7 @@ static void populate_lights(Json::Value & lights) {
 			 json_vec(light["dif"], dif) &&
 			 json_vec(light["spec"], spec));
 		if (!P) {
-			fprintf(stderr, "[E] reading JSON file: bad or insufficient parameters for light %s.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: bad or insufficient parameters for light '%s'.\n", name.c_str());
 			exit(1);
 		}
 		Light *l = LightManager::instance()->create(name, ltype);
@@ -354,7 +370,7 @@ static void populate_lights(Json::Value & lights) {
 				 (json_float(light["cutoff"], cutoff) && cutoff > 0.0f) &&
 				 (json_vec(light["spdir"], spdir) && !spdir.isZero()));
 			if (!P) {
-				fprintf(stderr, "[E] reading JSON file: bad or insufficient parameters for spotlight %s.\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: bad or insufficient parameters for spotlight '%s'.\n", name.c_str());
 				exit(1);
 			}
 			l->setSpotData(spdir, cutoff, exp);
@@ -387,7 +403,7 @@ static void populate_textures(Json::Value & textures) {
 	for(int i = 0; i < n; i++) {
 		Json::Value & texture = textures[i];
 		bool P;
-		string name, type;
+		string name, fname, type;
 		if (!json_string(texture["name"], name)) {
 			fprintf(stderr, "[E] reading JSON file: texture with no name.\n");
 			exit(1);
@@ -399,65 +415,94 @@ static void populate_textures(Json::Value & textures) {
 			ttype = check_texture_type(type);
 		int height, width;
 		string xpos, xneg, ypos, yneg, zpos, zneg;
+		Texture *newTex;
 		switch (ttype) {
 		case Texture::empty:
-			fprintf(stderr, "[E] reading JSON file: texture %s has invalid type %s (see texture.h for possible values)\n", name.c_str(), type.c_str());
+			fprintf(stderr, "[E] reading JSON file: texture '%s' has invalid type '%s' (see texture.h for possible values)\n", name.c_str(), type.c_str());
 			exit(1);
 			break;
 		case Texture::tex:
-			tm->create(name);
-			break;
 		case Texture::bumpmap:
-			tm->createBumpMap(name);
-			break;
 		case Texture::proj:
-			tm->createProj(name);
+			if (!json_string(texture["fname"], fname)) {
+				fprintf(stderr, "[E] reading JSON file: texture with no attached file.\n");
+				exit(1);
+			}
+			if (ttype == Texture::tex) newTex = tm->create(name, fname);
+			if (ttype == Texture::bumpmap) newTex = tm->createBumpMap(name,fname);
+			if (ttype == Texture::proj) newTex = tm->createProj(name, fname);
 			break;
 		case Texture::rt_depth:
 		case Texture::rt_color:
 			if(!json_int(texture["height"], height)) {
-				fprintf(stderr, "[E] reading JSON file: RT texture %s with no height.\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: RT texture '%s' with no height.\n", name.c_str());
 				exit(1);
 			}
 			if(!json_int(texture["width"], width)) {
-				fprintf(stderr, "[E] reading JSON file: RT texture %s with no width.\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: RT texture '%s' with no width.\n", name.c_str());
 				exit(1);
 			}
 			if(ttype == Texture::rt_depth)
-				tm->createRTDepth(name, height, width);
+				newTex = tm->createRTDepth(name, height, width);
 			else
-				tm->createRTColor(name, height, width);
+				newTex = tm->createRTColor(name, height, width);
 			break;
 		case Texture::cubemap:
 			if (!json_string(texture["xpos"], xpos)) {
-				fprintf(stderr, "[E] reading JSON file: cubemap texture %s has no 'xpos'\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: cubemap texture '%s' has no 'xpos'\n", name.c_str());
 				exit(1);
 			}
 			if (!json_string(texture["xneg"], xneg)) {
-				fprintf(stderr, "[E] reading JSON file: cubemap texture %s has no 'xneg'\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: cubemap texture '%s' has no 'xneg'\n", name.c_str());
 				exit(1);
 			}
 			if (!json_string(texture["ypos"], ypos)) {
-				fprintf(stderr, "[E] reading JSON file: cubemap texture %s has no 'ypos'\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: cubemap texture '%s' has no 'ypos'\n", name.c_str());
 				exit(1);
 			}
 			if (!json_string(texture["yneg"], yneg)) {
-				fprintf(stderr, "[E] reading JSON file: cubemap texture %s has no 'yneg'\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: cubemap texture '%s' has no 'yneg'\n", name.c_str());
 				exit(1);
 			}
 			if (!json_string(texture["zpos"], zpos)) {
-				fprintf(stderr, "[E] reading JSON file: cubemap texture %s has no 'zpos'\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: cubemap texture '%s' has no 'zpos'\n", name.c_str());
 				exit(1);
 			}
 			if (!json_string(texture["zneg"], zneg)) {
-				fprintf(stderr, "[E] reading JSON file: cubemap texture %s has no 'zneg'\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: cubemap texture '%s' has no 'zneg'\n", name.c_str());
 				exit(1);
 			}
-			tm->createCubeMap(name,
-							  xpos, xneg,
-							  ypos, yneg,
-							  zpos, zneg);
+			newTex = tm->createCubeMap(name,
+									   xpos, xneg,
+									   ypos, yneg,
+									   zpos, zneg);
 			break;
+		}
+		vector<string> wrapST;
+		P = json_vec_string(texture["wrapST"], wrapST);
+		if (wrapST.size()) {
+			if (wrapST.size() != 2) {
+				fprintf(stderr, "[E] reading JSON file: texture '%s': invalid wrap \n", name.c_str());
+				exit(1);
+			}
+			P = newTex->setWrapST(wrapST[0], wrapST[1]);
+			if (!P) {
+				fprintf(stderr, "[E] reading JSON file: texture '%s': invalid wrap \n", name.c_str());
+				exit(1);
+			}
+		}
+		vector<string> filters;
+		P = json_vec_string(texture["filtersMinMag"], filters);
+		if (filters.size()) {
+			if (filters.size() != 2) {
+				fprintf(stderr, "[E] reading JSON file: texture '%s': invalid filters \n", name.c_str());
+				exit(1);
+			}
+			P = newTex->setFilters(filters[0], filters[1]);
+			if (!P) {
+				fprintf(stderr, "[E] reading JSON file: texture '%s': invalid filters \n", name.c_str());
+				exit(1);
+			}
 		}
 	}
 }
@@ -499,10 +544,13 @@ static void populate_materials(Json::Value & materials) {
 		P = json_vec(material["specular"], spec);
 		if (P) {
 			P = json_float(material["shininess"], shininess);
-			if (!P) {
-				shininess = 0.0;
-			}
 			newMaterial->setSpecular(spec, shininess);
+		}
+
+		float alpha;
+		P = json_float(material["alpha"], alpha);
+		if (P) {
+			newMaterial->setAlpha(alpha);
 		}
 
 		string brdf;
@@ -515,7 +563,7 @@ static void populate_materials(Json::Value & materials) {
 				 (json_float(material["k"], k) && (k > 0.0f))
 				 );
 			if (!P) {
-				fprintf(stderr, "[E] reading JSON file: bad parameters for material %s.\n", name.c_str());
+				fprintf(stderr, "[E] reading JSON file: bad parameters for material '%s'.\n", name.c_str());
 				exit(1);
 			}
 			//newMaterial->setCookTorrance(roughness, f0, k);
@@ -526,6 +574,17 @@ static void populate_materials(Json::Value & materials) {
 			Texture *tex = TextureManager::instance()->find(texName);
 			if (tex)
 				newMaterial->setTexture(tex);
+		}
+		vector<string> texNames;
+		P = json_vec_string(material["textures"], texNames);
+		if (!P) {
+			fprintf(stderr, "[E] reading JSON file: bad textures in material '%s'\n", name.c_str());
+			exit(1);
+		} else {
+			string err;
+			if (!newMaterial->parse_set_textures(texNames, err)) {
+				fprintf(stderr, "[E] reading JSON file in material '%s': %s\n", name.c_str(), err.c_str());
+			}
 		}
 		P = json_string(material["bumpMap"], texName);
 		if (P) {
@@ -570,7 +629,7 @@ static Node *populate_nodes(Json::Value &jsnode, Node *parent = 0) {
 	if (json_string(jsnode["shader"], shaderName)) {
 		ShaderProgram * shader = ShaderManager::instance()->find(shaderName);
 		if (!shader) {
-			fprintf(stderr, "[E] reading JSON file: node %s with invalid shader %s.\n", name.c_str(), shaderName.c_str());
+			fprintf(stderr, "[E] reading JSON file: node '%s' with invalid shader '%s'.\n", name.c_str(), shaderName.c_str());
 			exit(1);
 		}
 		node->attachShader(shader);
@@ -586,7 +645,7 @@ static Node *populate_nodes(Json::Value &jsnode, Node *parent = 0) {
 	if (json_string(jsnode["gObj"], gObjName)) {
 		GObject * gObj = GObjectManager::instance()->find(gObjName);
 		if (!gObj) {
-			fprintf(stderr, "[E] reading JSON file: node %s with invalid gObj %s.\n", name.c_str(), gObjName.c_str());
+			fprintf(stderr, "[E] reading JSON file: node '%s' with invalid gObj '%s'.\n", name.c_str(), gObjName.c_str());
 			exit(1);
 		}
 		node->attachGobject(gObj);
@@ -594,7 +653,7 @@ static Node *populate_nodes(Json::Value &jsnode, Node *parent = 0) {
 	}
 	if (!jsnode["children"].isNull()) {
 		if (has_gObj) {
-			fprintf(stderr, "[E] reading JSON file: node %s has gObject and children.\n", name.c_str());
+			fprintf(stderr, "[E] reading JSON file: node '%s' has gObject and children.\n", name.c_str());
 			exit(1);
 		}
 		Json::Value & jschildren = jsnode["children"];
@@ -630,7 +689,7 @@ static void populate_sky(Json::Value & jssky) {
 	}
 	GObject *skyGObj = GObjectManager::instance()->find(gObjName);
 	if (!skyGObj) {
-		fprintf(stderr, "[E] reading JSON file: sky has with invalid gObj %s.\n", gObjName.c_str());
+		fprintf(stderr, "[E] reading JSON file: sky has with invalid gObj '%s'.\n", gObjName.c_str());
 		exit(1);
 	}
 	// shader
