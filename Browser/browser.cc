@@ -163,6 +163,7 @@ static void InitShaders() {
 	ShaderManager *mgr = ShaderManager::instance();
 	mgr->create("dummy", "Shaders/dummy.vert", "Shaders/dummy.frag");
 	mgr->create("pervertex", "Shaders/pervertex.vert", "Shaders/pervertex.frag");
+	
 }
 
 static void check_cull_camera() {

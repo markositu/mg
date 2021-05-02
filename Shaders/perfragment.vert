@@ -16,6 +16,12 @@ varying vec3 f_viewDirection; // camera space
 varying vec3 f_normal;        // camera space
 varying vec2 f_texCoord;
 
+
+
 void main() {
 	gl_Position = modelToClipMatrix * vec4(v_position, 1.0);
+	f_position= (modelToCameraMatrix * vec4(v_position,1)).xyz;//lo que era positionEye
+	f_normal=normalize((modelToCameraMatrix * vec4(v_normal,0)).xyz);//lo que era N
+	f_viewDirection=normalize(-f_position);//lo que era V
+	f_texCoord=v_texCoord;
 }
