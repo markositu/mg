@@ -43,7 +43,7 @@ using std::string;
 //    node with name nodeName (has to be unique).
 //  - Node::attachShader(ShaderProgram *theShader): attach shader to node.
 //  - Node::attachGobject(GObject *gobj ): attach geometry object to node.
-//  - RenderState::instance()->setSkybox(Node * skynode): Set sky node.
+//  - RenderState::instance()->setSkybox(Node * skynMaterialManager::instance()->create(const std::string & matName)ode): Set sky node.
 
 void CreateSkybox(GObject *gobj,
 				  ShaderProgram *skyshader,
@@ -63,12 +63,26 @@ void CreateSkybox(GObject *gobj,
 		exit(1);
 	}
 	/* =================== PUT YOUR CODE HERE ====================== */
+	//crear material
+	Material *cielo=MaterialManager::instance()->create("cielo");
+	//asignar textura cubica
+	cielo->setTexture(ctex);
+	//asignar al objeto nuestro material
+	gobj->setMaterial(cielo);
+	//crear el nuevo nodo
+	Node *nodoCielo=NodeManager::instance()->create("nodoCielo");
+	//le asignamos nuestro shader
+	nodoCielo->attachShader(skyshader);
+	//le asignamos nuestro objeto
+	nodoCielo->attachGobject(gobj);
+	//guardamos nuestro nodo en el render state
+	RenderState::instance()->setSkybox(nodoCielo);
 
 	/* =================== END YOUR CODE HERE ====================== */
 }
 
 // TODO: display the skybox
-//
+//RenderState::instance()->push(RenderState::modelview)
 // This function does the following:
 //
 // - Store previous shader
@@ -104,6 +118,22 @@ void DisplaySky(Camera *cam) {
 	if (!skynode) return;
 
 	/* =================== PUT YOUR CODE HERE ====================== */
-
+	//guardamos el shader anterior
+	//ShaderProgram *shaderAnterior=rs->getShader();
+	rs->push(RenderState::modelview);
+	//movemos el nodo sky a la posicion de la camara
+	Trfm3D trans=Trfm3D();
+	trans.addTrans(cam->getPosition());
+	rs->addTrfm(RenderState::modelview,&trans);
+	
+	//deshabilitar z buffer
+	glDisable(GL_DEPTH_TEST);
+	//hacer que el shader sea el del cielo
+	rs->setShader(skynode->getShader());
+	//dibujar el objeto
+	skynode->getGobject()->draw();
+	//habilitar z buffer
+	glEnable(GL_DEPTH_TEST);
+	rs->pop(RenderState::modelview);
 	/* =================== END YOUR CODE HERE ====================== */
 }
