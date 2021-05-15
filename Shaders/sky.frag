@@ -12,3 +12,4 @@ void main() {
 	texColor = textureCube(cubemap, f_texCoord);
 	gl_FragColor = texColor;
 }
+
