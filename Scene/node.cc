@@ -482,6 +482,7 @@ void Node::frustumCull(Camera *cam) {
 	if (m_gObject){
 		if(cam->checkFrustum(this->m_containerWC,planesbit)==IREJECT){
 			m_isCulled=1;
+			printf("No se dibuja\n");
 		}
 		else m_isCulled=0;
 	}
@@ -490,7 +491,10 @@ void Node::frustumCull(Camera *cam) {
 		for(list<Node *>::iterator it = m_children.begin(), end = m_children.end();
 		it != end; ++it) {
 			Node *theChild = *it;
-			theChild->frustumCull(cam);
+			if (cam->checkFrustum(this->m_containerWC,planesbit)==IREJECT){
+				setCulled(false);
+			}
+			else theChild->frustumCull(cam);
 		}
 
 
